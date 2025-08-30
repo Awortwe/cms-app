@@ -2,10 +2,10 @@
 // db.php - Database connection using PDO
 
 // Database configuration
-$host = 'sql210.ezyro.com';
-$dbname = 'ezyro_39822869_cms';
-$username = 'ezyro_39822869'; 
-$password = 'awortwe2000'; 
+$host = 'sql105.infinityfree.com';
+$dbname = 'if0_39810582_cms';
+$username = 'if0_39810582'; 
+$password = 'Asiamah2000'; 
 $charset = 'utf8mb4';
 
 // DSN (Data Source Name)
