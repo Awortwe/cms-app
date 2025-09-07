@@ -3,13 +3,14 @@
 
 // Database configuration
 $host = 'localhost';
+$port = 4306;  
 $dbname = 'cms';
 $username = 'root'; 
 $password = ''; 
 $charset = 'utf8mb4';
 
 // DSN (Data Source Name)
-$dsn = "mysql:host=$host;dbname=$dbname;charset=$charset";
+$dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=$charset";
 
 // PDO options
 $options = [
