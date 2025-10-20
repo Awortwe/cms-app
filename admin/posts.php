@@ -143,27 +143,55 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css"/>
-   <!-- PNG fallbacks (optional) -->
+  <!-- PNG fallbacks (optional) -->
   <link rel="icon" type="image/png" sizes="32x32" href="../images/book-heart.png" >
   <link rel="icon" type="image/png" sizes="16x16" href="../images/book-heart.png" >
 
   <style>
     :root{
+      /* Unified tokens */
       --brand:#3C91E6; --brand-dark:#2B6CB0;
-      --accent:#FD7238; --accent-light:#FF8A5B;
+      --accent:#3C91E6; --accent-light:#5BA3EE;
+      --orange:#FD7238; --orange-light:#FF8A5B;
       --ink:#1A202C; --ink-light:#2D3748;
       --soft:#F7FAFC; --soft-dark:#EDF2F7; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.06);
+
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover:   linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero:    linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.85) 100%);
+
+      --shadow-soft:   0 6px 16px rgba(0,0,0,.06);
       --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
+      --shadow-large:  0 20px 40px rgba(0,0,0,.12);
+      --shadow-glow:   0 0 40px rgba(60,145,230,.15);
     }
     html{scroll-behavior:smooth}
-    body{ background:var(--soft); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
+    body{ background:linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
 
-    /* Sidebar (matching home.php) */
+    /* Utilities */
+    .glass{ background:rgba(255,255,255,.1); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.2); border-radius:12px; }
+    .btn-gradient{
+      background: var(--gradient-primary); border:none; color:#fff; border-radius:14px; padding:.95rem 1rem; font-weight:600;
+      box-shadow: var(--shadow-glow); transition: all .3s ease; position:relative; overflow:hidden;
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, rgba(255,255,255,.1) 100%);
+      transition:left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform:translateY(-2px); color:#fff; box-shadow:var(--shadow-large); }
+    .btn-outline-primary{
+      border:2px solid #E2E8F0; border-radius:12px; background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-primary:hover{
+      background: var(--gradient-hover); border-color:transparent; color:#fff; transform:translateY(-1px);
+    }
+
+    /* Sidebar (matching) */
     .sidebar{
       width: 280px; min-height: 100vh; background:#fff; border-right:1px solid rgba(0,0,0,.06);
-      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column;
+      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column; box-shadow:var(--shadow-soft);
     }
     .sidebar .brand{ background:var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700; font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem; }
     .sidebar .menu{ padding:1rem; overflow-y:auto; }
@@ -171,13 +199,17 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
     .sidebar .nav-link:hover{ background:rgba(60,145,230,.08); color:var(--brand); transform:translateX(2px); }
     .sidebar .nav-link.active{ background:rgba(60,145,230,.14); color:var(--brand-dark); }
 
-    /* Topbar */
+    /* Topbar (gradient + white text) */
     .topbar{
-      height:72px; background:#fff; border-bottom:1px solid rgba(0,0,0,.06);
+      height:72px; background:var(--gradient-hero); color:#fff;
+      border-bottom:1px solid rgba(255,255,255,.2);
       display:flex; align-items:center; justify-content:flex-end;
-      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-soft);
+      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-medium);
     }
-    .topbar .hamburger{ display:none; border:0; background:transparent; }
+    .topbar .hamburger{ display:none; border:0; background:transparent; color:#fff; }
+    .topbar .dropdown-toggle{ color:#fff; }
+    .topbar .dropdown-toggle i{ color:#fff !important; }
+    .topbar .dropdown-toggle span{ color:#fff; } /* Admin name white */
 
     /* Main */
     .main{ padding:1.25rem; margin-left:280px; }
@@ -187,7 +219,14 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
     .card .card-title{ font-weight:700; }
 
     /* Header banner */
-    .admin-hero{ background:var(--gradient-primary); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); }
+    .admin-hero{ background:var(--gradient-hero); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); position:relative; overflow:hidden; }
+    .admin-hero::after{
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
+        radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+    }
 
     /* Form fields */
     .form-control, .form-select{ border:2px solid #E2E8F0; border-radius:12px; padding:0.9rem 1rem; background:#FAFAFA; transition:.2s; }
@@ -236,7 +275,7 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
     <button class="hamburger" id="toggleSidebar" aria-label="Toggle sidebar"><i class="bx bx-menu fs-3"></i></button>
     <div class="dropdown ms-auto">
       <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bx bxs-user-circle fs-3 me-2 text-primary"></i>
+        <i class="bx bxs-user-circle fs-3 me-2 text-white"></i>
         <span><?php echo htmlspecialchars($_SESSION['admin_name']); ?></span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="adminMenu">
@@ -259,7 +298,7 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="opacity-75">Create and manage blog/news posts and moderate comments.</div>
           </div>
           <div class="d-flex gap-2">
-            <a href="../index.php#posts" target="_blank" class="btn btn-light text-primary fw-semibold">
+            <a href="../index.php#posts" target="_blank" class="btn btn-gradient">
               <i class="bx bx-show me-1"></i> View Site
             </a>
           </div>
@@ -267,7 +306,7 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
       </div>
 
       <?php if ($message): ?>
-        <div class="alert alert-<?php echo $message_type === 'success' ? 'success':'danger'; ?> alert-dismissible fade show" role="alert" data-aos="fade-up">
+        <div class="alert alert-<?php echo $message_type === 'success' ? 'success':'danger'; ?> alert-dismissible fade show glass" role="alert" data-aos="fade-up">
           <?php echo htmlspecialchars($message); ?>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -336,11 +375,11 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
 
             <div class="sticky-actions mt-2">
-              <button type="submit" name="save_post" class="btn btn-primary btn-lg">
+              <button type="submit" name="save_post" class="btn btn-gradient btn-lg">
                 <?php echo $edit_post ? 'Update Post' : 'Create Post'; ?>
               </button>
               <?php if ($edit_post): ?>
-                <a href="posts.php" class="btn btn-outline-secondary ms-2">Cancel</a>
+                <a href="posts.php" class="btn btn-outline-primary ms-2">Cancel</a>
               <?php endif; ?>
             </div>
           </div>
@@ -389,7 +428,7 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
                       <i class="bx bxs-trash"></i>
                     </a>
                     <?php $slugOrId = !empty($p['slug']) ? 'slug='.urlencode($p['slug']) : 'id='.$p['id']; ?>
-                    <a class="btn btn-sm btn-outline-secondary ms-1" href="../post.php?<?php echo $slugOrId; ?>" target="_blank" title="View">
+                    <a class="btn btn-sm btn-outline-primary ms-1" href="../post.php?<?php echo $slugOrId; ?>" target="_blank" title="View">
                       <i class="bx bx-link-external"></i>
                     </a>
                   </td>
@@ -440,7 +479,7 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
                   <td class="small text-muted"><?php echo htmlspecialchars($c['created_at']); ?></td>
                   <td class="text-end text-nowrap">
                     <?php if (!$c['is_approved']): ?>
-                      <a class="btn btn-sm btn-outline-success" href="posts.php?approve_comment=<?php echo $c['id']; ?>" title="Approve">
+                      <a class="btn btn-sm btn-outline-primary" href="posts.php?approve_comment=<?php echo $c['id']; ?>" title="Approve">
                         <i class="bx bx-check"></i>
                       </a>
                     <?php endif; ?>
@@ -476,7 +515,7 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
   <script>
     AOS.init({ duration: 700, once: true });
 
-    // Toastr defaults (match home.php, optional to use later)
+    // Toastr defaults
     toastr.options = {
       closeButton: true, progressBar: true, newestOnTop: true, preventDuplicates: true,
       positionClass: "toast-top-right", timeOut: 3500, extendedTimeOut: 1500

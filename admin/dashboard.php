@@ -88,7 +88,7 @@ foreach ($sv as $row) {
   ];
 }
 
-// Posts: newest 5 (published first if you want; here just latest)
+// Posts: newest 5
 $pv = fetchAllSafe($pdo, "SELECT id, title, created_at AS ts FROM posts ORDER BY created_at DESC LIMIT 5");
 foreach ($pv as $row) {
   $activity[] = [
@@ -108,14 +108,13 @@ foreach ($cm as $row) {
   ];
 }
 
-// Sort all by time desc
+// Sort all by time desc and keep top 8
 usort($activity, function($a,$b){
   $ta = strtotime($a['time'] ?? '1970-01-01');
   $tb = strtotime($b['time'] ?? '1970-01-01');
   return $tb <=> $ta;
 });
-// Keep top 8
-$activity = array_slice($activity, 0, 8);
+$activity = array_slice($activity, 0, 3);
 
 /** ---------- Sparkline data (last 12 months) ---------- */
 $seriesEvents   = monthlySeries($pdo, 'events', "COALESCE(created_at, event_date)");
@@ -140,42 +139,109 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <!-- Toastr -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-   <!-- PNG fallbacks (optional) -->
+  <!-- PNG fallbacks (optional) -->
   <link rel="icon" type="image/png" sizes="32x32" href="../images/book-heart.png" >
   <link rel="icon" type="image/png" sizes="16x16" href="../images/book-heart.png" >
 
   <style>
     :root{
-      --brand:#3C91E6; --brand-dark:#2B6CB0;
-      --accent:#FD7238; --accent-light:#FF8A5B;
-      --ink:#1A202C; --ink-light:#2D3748;
-      --soft:#F7FAFC; --soft-dark:#EDF2F7; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --gradient-hero: linear-gradient(135deg, rgba(60,145,230,.95) 0%, rgba(253,114,56,.90) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.06);
-      --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
-      --shadow-large: 0 20px 40px rgba(0,0,0,.12);
+      /* === Unified tokens (same as index.php) === */
+      --brand: #3C91E6;
+      --brand-dark: #2B6CB0;
+      --accent: #3C91E6;
+      --accent-light: #5BA3EE;
+      --orange: #FD7238;
+      --orange-light: #FF8A5B;
+      --ink: #1A202C;
+      --ink-light: #2D3748;
+      --soft: #F7FAFC;
+      --soft-dark: #EDF2F7;
+      --white: #FFFFFF;
+      --success: #48BB78;
+      --warning: #ED8936;
+      --danger: #F56565;
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover: linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero: linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.8) 100%);
+      --shadow-soft: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+      --shadow-medium: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+      --shadow-large: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+      --shadow-glow: 0 0 40px rgba(60, 145, 230, 0.15);
     }
 
     html{scroll-behavior:smooth}
-    body{ background: var(--soft); color: var(--ink); font-family: 'Inter', sans-serif; overflow-x:hidden; }
+    body{
+      background: linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      overflow-x:hidden;
+    }
+
+    /* UTILITIES (shared vibe) */
+    .text-gradient{
+      background: var(--gradient-primary);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .glass{
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+    }
+    .btn-gradient{
+      background: var(--gradient-primary);
+      border: none;
+      color: white;
+      border-radius:14px;
+      padding:.85rem 1rem;
+      font-weight:600;
+      box-shadow: var(--shadow-glow);
+      transition: all .3s ease;
+      position: relative; overflow: hidden;
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+      transition: left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform: translateY(-2px); color:#fff; box-shadow: var(--shadow-large); }
+
+    .btn-outline-primary{
+      border:2px solid #E2E8F0; border-radius:14px; background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-primary:hover{
+      background: var(--gradient-hover); border-color: transparent; color:#fff; transform: translateY(-1px);
+    }
 
     /* Sidebar */
     .sidebar{
       width: 280px; min-height: 100vh; background: #fff; border-right: 1px solid rgba(0,0,0,.06);
-      position: fixed; left: 0; top: 0; z-index: 100; display:flex; flex-direction:column;
+      position: fixed; left: 0; top: 0; z-index: 100; display:flex; flex-direction:column; box-shadow: var(--shadow-soft);
     }
-    .sidebar .brand{ background: var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700; font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem; }
+    .sidebar .brand{
+      background: var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700;
+      font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem;
+    }
     .sidebar .menu{ padding:1rem; overflow-y:auto; }
-    .sidebar .nav-link{ color:var(--ink); border-radius:.7rem; font-weight:500; padding:.75rem .9rem; display:flex; align-items:center; gap:.6rem; transition:.25s ease; }
+    .sidebar .nav-link{
+      color:var(--ink); border-radius:.7rem; font-weight:500; padding:.75rem .9rem;
+      display:flex; align-items:center; gap:.6rem; transition:.25s ease;
+      position: relative;
+    }
     .sidebar .nav-link:hover{ background:rgba(60,145,230,.08); color:var(--brand); transform:translateX(2px); }
-    .sidebar .nav-link.active{ background:rgba(60,145,230,.14); color:var(--brand-dark); }
+    .sidebar .nav-link.active{
+      background:rgba(60,145,230,.14); color:var(--brand-dark);
+    }
 
     /* Topbar */
     .topbar{
       height:72px; background:#fff; border-bottom:1px solid rgba(0,0,0,.06);
       display:flex; align-items:center; justify-content:space-between;
       padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-soft);
+      backdrop-filter: blur(10px);
     }
     .topbar .hamburger{ display:none; border:0; background:transparent; }
     .topbar .hamburger i{ font-size:1.8rem; }
@@ -185,10 +251,14 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
     .page-content{ margin-top:84px; }
 
     /* Hero */
-    .admin-hero{ background:var(--gradient-hero); color:#fff; border-radius:20px; box-shadow:var(--shadow-medium); padding:2rem; position:relative; overflow:hidden; }
+    .admin-hero{
+      background:var(--gradient-hero); color:#fff; border-radius:20px; box-shadow:var(--shadow-medium);
+      padding:2rem; position:relative; overflow:hidden;
+    }
     .admin-hero::after{ content:''; position:absolute; inset:0;
-      background:radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
-                 radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
+      background:
+        radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
+        radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
       pointer-events:none; }
     .admin-hero h2{ font-family:'Playfair Display',serif; font-weight:700; }
 
@@ -203,11 +273,11 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
     .card .card-title{ font-weight:700; }
 
     .quick-actions .btn{ border-radius:14px; padding:.9rem 1rem; font-weight:600; display:flex; align-items:center; gap:.5rem; box-shadow:var(--shadow-soft); }
-    .quick-actions .btn i{ font-size:1.1rem; }
 
     .table thead th{ font-weight:700; color:#4A5568; border-bottom:2px solid #EDF2F7; }
     .table-hover tbody tr:hover{ background:#F8FAFC; }
 
+    /* Responsive */
     @media (max-width: 992px){
       .sidebar{ transform:translateX(-100%); transition:transform .3s ease; width:100%; }
       .sidebar.open{ transform:translateX(0); }
@@ -264,12 +334,12 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
       <div class="admin-hero mb-4" data-aos="fade-up">
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
           <div>
-            <h2 class="mb-1">Welcome, <?php echo htmlspecialchars($_SESSION['admin_name']); ?> 👋</h2>
+            <h2 class="mb-1">Welcome, <span class="text-white"><?php echo htmlspecialchars($_SESSION['admin_name']); ?></span> 👋</h2>
             <div class="meta">Live overview of sermons, events, posts, and messages.</div>
           </div>
           <div class="d-flex gap-2">
-            <a href="sermons.php" class="btn btn-light text-primary fw-semibold"><i class="bx bx-video me-1"></i> Upload Sermon</a>
-            <a href="events.php" class="btn btn-outline-light fw-semibold"><i class="bx bx-calendar-plus me-1"></i> Add Event</a>
+            <a href="sermons.php" class="btn btn-gradient"><i class="bx bx-video me-1"></i> Upload Sermon</a>
+            <a href="events.php" class="btn btn-outline-primary"><i class="bx bx-calendar-plus me-1"></i> Add Event</a>
           </div>
         </div>
       </div>
@@ -381,10 +451,10 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
           <div class="card p-4">
             <h5 class="card-title mb-3">Quick Actions</h5>
             <div class="d-grid gap-2 quick-actions">
-              <a class="btn btn-primary" href="events.php"><i class="bx bx-plus"></i> Add New Event</a>
-              <a class="btn btn-success" href="sermons.php"><i class="bx bx-upload"></i> Upload Sermon</a>
-              <a class="btn btn-info text-white" href="posts.php"><i class="bx bx-edit"></i> Write Post</a>
-              <a class="btn btn-warning" href="footer.php"><i class="bx bx-cog"></i> Settings</a>
+              <a class="btn btn-gradient" href="events.php"><i class="bx bx-plus"></i> Add New Event</a>
+              <a class="btn btn-gradient" href="sermons.php"><i class="bx bx-upload"></i> Upload Sermon</a>
+              <a class="btn btn-gradient" href="posts.php"><i class="bx bx-edit"></i> Write Post</a>
+              <a class="btn btn-outline-primary" href="footer.php"><i class="bx bx-cog"></i> Settings</a>
             </div>
           </div>
         </div>
@@ -405,11 +475,13 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
     AOS.init({ duration: 800, easing: 'ease-out-quart', once: true, offset: 50 });
 
     // Toastr defaults
-    toastr.options = {
-      closeButton: true, progressBar: true, newestOnTop: true, preventDuplicates: true,
-      positionClass: "toast-top-right", timeOut: 3500, extendedTimeOut: 1500,
-      showMethod: "fadeIn", hideMethod: "fadeOut"
-    };
+    if (window.toastr) {
+      toastr.options = {
+        closeButton: true, progressBar: true, newestOnTop: true, preventDuplicates: true,
+        positionClass: "toast-top-right", timeOut: 3500, extendedTimeOut: 1500,
+        showMethod: "fadeIn", hideMethod: "fadeOut"
+      };
+    }
 
     // Sidebar toggle (mobile)
     const sidebar = document.getElementById('sidebar');
@@ -421,10 +493,17 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
     const fmt = new Intl.DateTimeFormat(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     if (today) today.textContent = fmt.format(new Date());
 
-    // Sparkline helper
-    const sparkline = (id, labels, data, color) => {
+    // Simple sparkline helper (uses rgba background to avoid helpers.color)
+    const sparkline = (id, labels, data, borderColor, bgAlpha=0.15) => {
       const ctx = document.getElementById(id);
       if (!ctx) return;
+      // convert hex to rgba with alpha
+      const hex = borderColor.replace('#','');
+      const r = parseInt(hex.substring(0,2),16);
+      const g = parseInt(hex.substring(2,4),16);
+      const b = parseInt(hex.substring(4,6),16);
+      const bg = `rgba(${r}, ${g}, ${b}, ${bgAlpha})`;
+
       new Chart(ctx, {
         type: 'line',
         data: {
@@ -432,8 +511,8 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
           datasets: [{
             data,
             tension:.35,
-            borderColor: color,
-            backgroundColor: Chart.helpers.color(color).alpha(0.15),
+            borderColor,
+            backgroundColor: bg,
             fill:true,
             borderWidth:2,
             pointRadius:0
@@ -458,10 +537,10 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
     const msData   = <?php echo json_encode($seriesMessages['data']); ?>;
 
     // Draw sparklines
-    sparkline('sparkEvents',   evLabels, evData, '#3C91E6');
-    sparkline('sparkSermons',  svLabels, svData, '#8A63D2');
-    sparkline('sparkPosts',    psLabels, psData, '#2BB673');
-    sparkline('sparkMessages', msLabels, msData, '#FD7238');
+    sparkline('sparkEvents',   evLabels, evData,   '#3C91E6'); // brand
+    sparkline('sparkSermons',  svLabels, svData,   '#8A63D2'); // purple
+    sparkline('sparkPosts',    psLabels, psData,   '#2BB673'); // green
+    sparkline('sparkMessages', msLabels, msData,   '#FD7238'); // orange
 
     // Welcome toast on fresh login
     <?php if (isset($_GET['login']) && $_GET['login'] === 'success'): ?>

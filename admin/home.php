@@ -82,31 +82,95 @@ if ($home_content && !empty($home_content['bullet_points'])) {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-   <!-- PNG fallbacks (optional) -->
+  <!-- PNG fallbacks (optional) -->
   <link rel="icon" type="image/png" sizes="32x32" href="../images/book-heart.png" >
   <link rel="icon" type="image/png" sizes="16x16" href="../images/book-heart.png" >
 
   <style>
     :root{
-      --brand:#3C91E6; --brand-dark:#2B6CB0;
-      --accent:#FD7238; --accent-light:#FF8A5B;
-      --ink:#1A202C; --ink-light:#2D3748;
-      --soft:#F7FAFC; --soft-dark:#EDF2F7; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.06);
-      --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
+      /* Unified tokens (match site) */
+      --brand: #3C91E6;
+      --brand-dark: #2B6CB0;
+      --accent: #3C91E6;
+      --accent-light: #5BA3EE;
+      --orange: #FD7238;
+      --orange-light: #FF8A5B;
+      --ink: #1A202C;
+      --ink-light: #2D3748;
+      --soft: #F7FAFC;
+      --soft-dark: #EDF2F7;
+      --white: #fff;
+      --success: #48BB78;
+      --warning: #ED8936;
+      --danger: #F56565;
+
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover: linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero: linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.8) 100%);
+
+      --shadow-soft: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+      --shadow-medium: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+      --shadow-large: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+      --shadow-glow: 0 0 40px rgba(60, 145, 230, 0.15);
     }
     html{scroll-behavior:smooth}
-    body{ background:var(--soft); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
+    body{
+      background: linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%);
+      color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden;
+    }
+
+    /* Utilities */
+    .text-gradient{
+      background: var(--gradient-primary);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .glass{
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+    }
+    .btn-gradient{
+      background: var(--gradient-primary);
+      border: none;
+      color: white;
+      border-radius:14px;
+      padding:.95rem 1rem;
+      font-weight:600;
+      box-shadow: var(--shadow-glow);
+      transition: all .3s ease;
+      position: relative; overflow: hidden;
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+      transition: left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform: translateY(-2px); color:#fff; box-shadow: var(--shadow-large); }
+
+    .btn-outline-primary{
+      border:2px solid #E2E8F0; border-radius:12px; background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-primary:hover{
+      background: var(--gradient-hover); border-color: transparent; color:#fff; transform: translateY(-1px);
+    }
 
     /* Sidebar (matches dashboard) */
     .sidebar{
       width: 280px; min-height: 100vh; background:#fff; border-right:1px solid rgba(0,0,0,.06);
-      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column;
+      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column; box-shadow: var(--shadow-soft);
     }
-    .sidebar .brand{ background:var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700; font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem; }
+    .sidebar .brand{
+      background:var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700;
+      font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem;
+    }
     .sidebar .menu{ padding:1rem; overflow-y:auto; }
-    .sidebar .nav-link{ color:var(--ink); border-radius:.7rem; font-weight:500; padding:.75rem .9rem; display:flex; align-items:center; gap:.6rem; transition:.25s ease; }
+    .sidebar .nav-link{
+      color:var(--ink); border-radius:.7rem; font-weight:500; padding:.75rem .9rem; display:flex; align-items:center; gap:.6rem; transition:.25s ease;
+    }
     .sidebar .nav-link:hover{ background:rgba(60,145,230,.08); color:var(--brand); transform:translateX(2px); }
     .sidebar .nav-link.active{ background:rgba(60,145,230,.14); color:var(--brand-dark); }
 
@@ -115,6 +179,7 @@ if ($home_content && !empty($home_content['bullet_points'])) {
       height:72px; background:#fff; border-bottom:1px solid rgba(0,0,0,.06);
       display:flex; align-items:center; justify-content:flex-end;
       padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-soft);
+      backdrop-filter: blur(10px);
     }
     .topbar .hamburger{ display:none; border:0; background:transparent; }
 
@@ -126,11 +191,25 @@ if ($home_content && !empty($home_content['bullet_points'])) {
     .card .card-title{ font-weight:700; }
 
     /* Header banner */
-    .admin-hero{ background:var(--gradient-primary); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); }
+    .admin-hero{
+      background:var(--gradient-hero); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium);
+      position:relative; overflow:hidden;
+    }
+    .admin-hero::after{
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
+        radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+    }
 
     /* Form fields */
-    .form-control, .form-select{ border:2px solid #E2E8F0; border-radius:12px; padding:0.9rem 1rem; background:#FAFAFA; transition:.2s; }
-    .form-control:focus, .form-select:focus{ border-color:var(--brand); box-shadow:0 0 0 .2rem rgba(60,145,230,.15); background:#fff; }
+    .form-control, .form-select{
+      border:2px solid #E2E8F0; border-radius:12px; padding:0.9rem 1rem; background:#FAFAFA; transition:.2s;
+    }
+    .form-control:focus, .form-select:focus{
+      border-color:var(--brand); box-shadow:0 0 0 .2rem rgba(60,145,230,.15); background:#fff;
+    }
     .form-label{ font-weight:600; color:var(--ink); }
 
     /* Upload dropzone */
@@ -146,15 +225,21 @@ if ($home_content && !empty($home_content['bullet_points'])) {
       background: #eee center/cover no-repeat;
     }
     .hero-preview .overlay{
-      position:absolute; inset:0; background:linear-gradient(135deg, rgba(60,145,230,.85), rgba(253,114,56,.75));
+      position:absolute; inset:0; background: var(--gradient-hero);
     }
     .hero-preview .content{
       position:relative; z-index:2; color:#fff; padding:2rem;
     }
-    .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .7rem; border-radius:999px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); margin:.15rem .25rem .15rem 0; }
+    .chip{
+      display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .7rem; border-radius:999px;
+      background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); margin:.15rem .25rem .15rem 0;
+    }
 
     /* Sticky save */
-    .sticky-actions{ position:sticky; bottom:0; z-index:5; background:#fff; padding:1rem; border-top:1px solid #EDF2F7; border-bottom-left-radius:18px; border-bottom-right-radius:18px; }
+    .sticky-actions{
+      position:sticky; bottom:0; z-index:5; background:#fff; padding:1rem; border-top:1px solid #EDF2F7;
+      border-bottom-left-radius:18px; border-bottom-right-radius:18px;
+    }
 
     @media (max-width: 992px){
       .sidebar{ transform:translateX(-100%); transition:transform .3s ease; width:100%; }
@@ -206,11 +291,11 @@ if ($home_content && !empty($home_content['bullet_points'])) {
       <div class="admin-hero mb-4" data-aos="fade-up">
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
           <div>
-            <h2 class="mb-1">Home / Hero Section</h2>
+            <h2 class="mb-1">Home / <span class="text-white">Hero Section</span></h2>
             <div class="opacity-75">Edit the text, bullets, buttons and hero image seen on the public homepage.</div>
           </div>
           <div class="d-flex gap-2">
-            <a href="../index.php#home" target="_blank" class="btn btn-light text-primary fw-semibold">
+            <a href="../index.php#home" target="_blank" class="btn btn-gradient">
               <i class="bx bx-show me-1"></i> View Site
             </a>
           </div>
@@ -218,7 +303,7 @@ if ($home_content && !empty($home_content['bullet_points'])) {
       </div>
 
       <?php if ($message): ?>
-        <div class="alert alert-<?php echo $message_type == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert" data-aos="fade-up">
+        <div class="alert alert-<?php echo $message_type == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show glass" role="alert" data-aos="fade-up">
           <?php echo htmlspecialchars($message); ?>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -278,7 +363,8 @@ if ($home_content && !empty($home_content['bullet_points'])) {
               </div>
 
               <div class="sticky-actions mt-4">
-                <button type="submit" class="btn btn-primary btn-lg w-100">
+                <!-- Unified primary button -->
+                <button type="submit" class="btn btn-gradient btn-lg w-100">
                   <i class="bx bx-save me-1"></i> Save Changes
                 </button>
               </div>

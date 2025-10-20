@@ -102,27 +102,67 @@ if (isset($_GET['edit'])) {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
   <!-- DataTables -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css"/>
-   <!-- PNG fallbacks (optional) -->
+  <!-- PNG fallbacks (optional) -->
   <link rel="icon" type="image/png" sizes="32x32" href="../images/book-heart.png" >
   <link rel="icon" type="image/png" sizes="16x16" href="../images/book-heart.png" >
 
   <style>
     :root{
+      /* Unified tokens */
       --brand:#3C91E6; --brand-dark:#2B6CB0;
-      --accent:#FD7238; --accent-light:#FF8A5B;
+      --accent:#3C91E6; --accent-light:#5BA3EE;
+      --orange:#FD7238; --orange-light:#FF8A5B;
       --ink:#1A202C; --ink-light:#2D3748;
       --soft:#F7FAFC; --soft-dark:#EDF2F7; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.06);
-      --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
+      --success:#48BB78; --warning:#ED8936; --danger:#F56565;
+
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover:   linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero:    linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.8) 100%);
+
+      --shadow-soft:   0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+      --shadow-medium: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+      --shadow-large:  0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+      --shadow-glow:   0 0 40px rgba(60,145,230,.15);
     }
     html{scroll-behavior:smooth}
-    body{ background:var(--soft); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
+    body{ background:linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
 
-    /* Sidebar (same as home.php) */
+    /* Utilities */
+    .text-gradient{
+      background: var(--gradient-primary);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .glass{
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:12px;
+    }
+    .btn-gradient{
+      background: var(--gradient-primary);
+      border:none; color:#fff; border-radius:14px; padding:.95rem 1rem; font-weight:600;
+      box-shadow: var(--shadow-glow); transition: all .3s ease; position:relative; overflow:hidden;
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,.2) 0%, rgba(255,255,255,.1) 100%);
+      transition: left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform: translateY(-2px); color:#fff; box-shadow: var(--shadow-large); }
+
+    .btn-outline-primary{
+      border:2px solid #E2E8F0; border-radius:12px; background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-primary:hover{
+      background: var(--gradient-hover); border-color: transparent; color:#fff; transform: translateY(-1px);
+    }
+
+    /* Sidebar */
     .sidebar{
       width: 280px; min-height: 100vh; background:#fff; border-right:1px solid rgba(0,0,0,.06);
-      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column;
+      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column; box-shadow:var(--shadow-soft);
     }
     .sidebar .brand{ background:var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700; font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem; }
     .sidebar .menu{ padding:1rem; overflow-y:auto; }
@@ -135,6 +175,7 @@ if (isset($_GET['edit'])) {
       height:72px; background:#fff; border-bottom:1px solid rgba(0,0,0,.06);
       display:flex; align-items:center; justify-content:flex-end;
       padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-soft);
+      backdrop-filter: blur(10px);
     }
     .topbar .hamburger{ display:none; border:0; background:transparent; }
 
@@ -146,7 +187,14 @@ if (isset($_GET['edit'])) {
     .card .card-title{ font-weight:700; }
 
     /* Header banner */
-    .admin-hero{ background:var(--gradient-primary); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); }
+    .admin-hero{ background:var(--gradient-hero); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); position:relative; overflow:hidden; }
+    .admin-hero::after{
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
+        radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+    }
 
     /* Form fields */
     .form-control, .form-select{ border:2px solid #E2E8F0; border-radius:12px; padding:0.9rem 1rem; background:#FAFAFA; transition:.2s; }
@@ -219,7 +267,7 @@ if (isset($_GET['edit'])) {
             <div class="opacity-75">Create, update, and organize events shown on the site.</div>
           </div>
           <div class="d-flex gap-2">
-            <a href="../index.php#events" target="_blank" class="btn btn-light text-primary fw-semibold">
+            <a href="../index.php#events" target="_blank" class="btn btn-gradient">
               <i class="bx bx-show me-1"></i> View Site
             </a>
           </div>
@@ -227,7 +275,7 @@ if (isset($_GET['edit'])) {
       </div>
 
       <?php if ($message): ?>
-        <div class="alert alert-<?php echo $message_type == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show" role="alert" data-aos="fade-up">
+        <div class="alert alert-<?php echo $message_type == 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show glass" role="alert" data-aos="fade-up">
           <?php echo htmlspecialchars($message); ?>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -312,11 +360,11 @@ if (isset($_GET['edit'])) {
               <div class="sticky-actions mt-4">
                 <?php if ($edit_event): ?>
                   <div class="d-grid gap-2">
-                    <button type="submit" name="update_event" class="btn btn-primary btn-lg"><i class="bx bx-save me-1"></i> Update Event</button>
-                    <a href="events.php" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" name="update_event" class="btn btn-gradient btn-lg"><i class="bx bx-save me-1"></i> Update Event</button>
+                    <a href="events.php" class="btn btn-outline-primary">Cancel</a>
                   </div>
                 <?php else: ?>
-                  <button type="submit" name="add_event" class="btn btn-primary btn-lg w-100">
+                  <button type="submit" name="add_event" class="btn btn-gradient btn-lg w-100">
                     <i class="bx bx-plus-circle me-1"></i> Add Event
                   </button>
                 <?php endif; ?>
@@ -362,7 +410,7 @@ if (isset($_GET['edit'])) {
                           <a href="events.php?edit=<?php echo $event['id']; ?>" class="btn btn-sm btn-outline-primary" title="Edit">
                             <i class="bx bxs-edit"></i>
                           </a>
-                          <a href="events.php?delete=<?php echo $event['id']; ?>" class="btn btn-sm btn-outline-danger ms-1" title="Delete"
+                          <a href="events.php?delete=<?php echo $event['id']; ?>" class="btn btn-sm btn-outline-primary ms-1" title="Delete"
                              onclick="return confirm('Are you sure you want to delete this event?')">
                             <i class="bx bxs-trash"></i>
                           </a>
@@ -397,13 +445,13 @@ if (isset($_GET['edit'])) {
   <script>
     AOS.init({ duration: 700, once: true });
 
-    // Toastr defaults (same as home.php)
+    // Toastr defaults
     toastr.options = {
       closeButton: true, progressBar: true, newestOnTop: true, preventDuplicates: true,
       positionClass: "toast-top-right", timeOut: 3500, extendedTimeOut: 1500
     };
 
-    // Sidebar toggle (mobile) same as home.php
+    // Sidebar toggle (mobile)
     const sidebar = document.getElementById('sidebar');
     const toggleSidebar = document.getElementById('toggleSidebar');
     toggleSidebar?.addEventListener('click', () => sidebar.classList.toggle('open'));
@@ -424,9 +472,7 @@ if (isset($_GET['edit'])) {
           infoFiltered: "(filtered from _MAX_ total entries)",
           paginate: { first:"First", last:"Last", next:"Next", previous:"Previous" }
         },
-        columnDefs: [
-          { orderable: false, targets: 4 }
-        ]
+        columnDefs: [{ orderable: false, targets: 4 }]
       });
     });
 

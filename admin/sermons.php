@@ -1,7 +1,7 @@
 <?php
 /**
  * sermons.php (Admin) — VIDEO ONLY
- * Styling aligned with admin/home.php. Backend logic unchanged.
+ * Theming aligned with dashboard/home/events. Backend logic unchanged.
  */
 session_start();
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -211,27 +211,56 @@ if (isset($_GET['edit_video'])) {
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css"/>
-   <!-- PNG fallbacks (optional) -->
+  <!-- PNG fallbacks (optional) -->
   <link rel="icon" type="image/png" sizes="32x32" href="../images/book-heart.png" >
   <link rel="icon" type="image/png" sizes="16x16" href="../images/book-heart.png" >
 
   <style>
     :root{
+      /* Unified tokens */
       --brand:#3C91E6; --brand-dark:#2B6CB0;
-      --accent:#FD7238; --accent-light:#FF8A5B;
+      --accent:#3C91E6; --accent-light:#5BA3EE;
+      --orange:#FD7238; --orange-light:#FF8A5B;
       --ink:#1A202C; --ink-light:#2D3748;
       --soft:#F7FAFC; --soft-dark:#EDF2F7; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.06);
+      --success:#48BB78; --warning:#ED8936; --danger:#F56565;
+
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover:   linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero:    linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.85) 100%);
+
+      --shadow-soft:   0 6px 16px rgba(0,0,0,.06);
       --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
+      --shadow-large:  0 20px 40px rgba(0,0,0,.12);
+      --shadow-glow:   0 0 40px rgba(60,145,230,.15);
     }
     html{scroll-behavior:smooth}
-    body{ background:var(--soft); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
+    body{ background:linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
 
-    /* Sidebar (like home.php) */
+    /* Utilities */
+    .glass{ background:rgba(255,255,255,.1); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.2); border-radius:12px; }
+    .btn-gradient{
+      background: var(--gradient-primary); border:none; color:#fff; border-radius:14px; padding:.95rem 1rem; font-weight:600;
+      box-shadow: var(--shadow-glow); transition: all .3s ease; position:relative; overflow:hidden;
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, rgba(255,255,255,.1) 100%);
+      transition:left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform:translateY(-2px); color:#fff; box-shadow:var(--shadow-large); }
+    .btn-outline-primary{
+      border:2px solid #E2E8F0; border-radius:12px; background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-primary:hover{
+      background: var(--gradient-hover); border-color:transparent; color:#fff; transform:translateY(-1px);
+    }
+
+    /* Sidebar */
     .sidebar{
       width: 280px; min-height: 100vh; background:#fff; border-right:1px solid rgba(0,0,0,.06);
-      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column;
+      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column; box-shadow:var(--shadow-soft);
     }
     .sidebar .brand{ background:var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700; font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem; }
     .sidebar .menu{ padding:1rem; overflow-y:auto; }
@@ -239,13 +268,17 @@ if (isset($_GET['edit_video'])) {
     .sidebar .nav-link:hover{ background:rgba(60,145,230,.08); color:var(--brand); transform:translateX(2px); }
     .sidebar .nav-link.active{ background:rgba(60,145,230,.14); color:var(--brand-dark); }
 
-    /* Topbar */
+    /* Topbar (gradient + white text) */
     .topbar{
-      height:72px; background:#fff; border-bottom:1px solid rgba(0,0,0,.06);
+      height:72px; background:var(--gradient-hero); color:#fff;
+      border-bottom:1px solid rgba(255,255,255,.2);
       display:flex; align-items:center; justify-content:flex-end;
-      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-soft);
+      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-medium);
     }
-    .topbar .hamburger{ display:none; border:0; background:transparent; }
+    .topbar .hamburger{ display:none; border:0; background:transparent; color:#fff; }
+    .topbar .dropdown-toggle{ color:#fff; }
+    .topbar .dropdown-toggle i{ color:#fff !important; }
+    .topbar .dropdown-toggle span{ color:#fff; } /* Admin name white */
 
     /* Main */
     .main{ padding:1.25rem; margin-left:280px; }
@@ -255,7 +288,14 @@ if (isset($_GET['edit_video'])) {
     .card .card-title{ font-weight:700; }
 
     /* Header banner */
-    .admin-hero{ background:var(--gradient-primary); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); }
+    .admin-hero{ background:var(--gradient-hero); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); position:relative; overflow:hidden; }
+    .admin-hero::after{
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
+        radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+    }
 
     /* Form fields */
     .form-control, .form-select{ border:2px solid #E2E8F0; border-radius:12px; padding:0.9rem 1rem; background:#FAFAFA; transition:.2s; }
@@ -304,7 +344,7 @@ if (isset($_GET['edit_video'])) {
     <button class="hamburger" id="toggleSidebar" aria-label="Toggle sidebar"><i class="bx bx-menu fs-3"></i></button>
     <div class="dropdown ms-auto">
       <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bx bxs-user-circle fs-3 me-2 text-primary"></i>
+        <i class="bx bxs-user-circle fs-3 me-2 text-white"></i>
         <span><?= htmlspecialchars($_SESSION['admin_name']) ?></span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="adminMenu">
@@ -327,7 +367,7 @@ if (isset($_GET['edit_video'])) {
             <div class="opacity-75">Upload thumbnails & short clips, add YouTube IDs, and link to full videos.</div>
           </div>
           <div class="d-flex gap-2">
-            <a href="../index.php#sermons" target="_blank" class="btn btn-light text-primary fw-semibold">
+            <a href="../index.php#sermons" target="_blank" class="btn btn-gradient">
               <i class="bx bx-show me-1"></i> View Site
             </a>
           </div>
@@ -335,7 +375,7 @@ if (isset($_GET['edit_video'])) {
       </div>
 
       <?php if ($message): ?>
-        <div class="alert alert-<?= $message_type === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert" data-aos="fade-up">
+        <div class="alert alert-<?= $message_type === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show glass" role="alert" data-aos="fade-up">
           <?= htmlspecialchars($message) ?>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -392,13 +432,13 @@ if (isset($_GET['edit_video'])) {
           <div class="sticky-actions mt-4">
             <?php if ($edit_video): ?>
               <div class="d-grid gap-2">
-                <button class="btn btn-primary btn-lg" type="submit" name="update_video">
+                <button class="btn btn-gradient btn-lg" type="submit" name="update_video">
                   <i class="bx bx-save me-1"></i> Update Video
                 </button>
-                <a class="btn btn-outline-secondary" href="sermons.php">Cancel</a>
+                <a class="btn btn-outline-primary" href="sermons.php">Cancel</a>
               </div>
             <?php else: ?>
-              <button class="btn btn-primary btn-lg w-100" type="submit" name="add_video">
+              <button class="btn btn-gradient btn-lg w-100" type="submit" name="add_video">
                 <i class="bx bx-plus-circle me-1"></i> Add Video
               </button>
             <?php endif; ?>
@@ -434,7 +474,7 @@ if (isset($_GET['edit_video'])) {
                     <a class="btn btn-sm btn-outline-primary" href="sermons.php?edit_video=<?= (int)$v['id'] ?>" title="Edit">
                       <i class="bx bxs-edit"></i>
                     </a>
-                    <a class="btn btn-sm btn-outline-danger ms-1" href="sermons.php?delete_video=<?= (int)$v['id'] ?>" onclick="return confirm('Delete this video sermon? Media files will be removed.');" title="Delete">
+                    <a class="btn btn-sm btn-outline-primary ms-1" href="sermons.php?delete_video=<?= (int)$v['id'] ?>" onclick="return confirm('Delete this video sermon? Media files will be removed.');" title="Delete">
                       <i class="bx bxs-trash"></i>
                     </a>
                   </td>
@@ -465,7 +505,7 @@ if (isset($_GET['edit_video'])) {
   <script>
     AOS.init({ duration: 700, once: true });
 
-    // Toastr defaults (match home.php)
+    // Toastr defaults
     toastr.options = {
       closeButton: true, progressBar: true, newestOnTop: true, preventDuplicates: true,
       positionClass: "toast-top-right", timeOut: 3500, extendedTimeOut: 1500

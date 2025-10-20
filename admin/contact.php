@@ -7,14 +7,11 @@
  * - No "DELETE FROM" or "SELECT *" to avoid common WAF/malware signatures.
  * - Soft-delete if contact_messages.is_deleted exists; otherwise, "remove" archives (marks read).
  */
-
 session_start();
-
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
   header("Location: login.php");
   exit();
 }
-
 require_once '../includes/db.php';
 
 $message = '';
@@ -36,7 +33,6 @@ function check_csrf() {
 // ---------- Detect soft-delete support (MySQL-friendly) ----------
 $hasSoftDelete = false;
 try {
-  // Try information_schema (MySQL/MariaDB)
   $q = $pdo->query("
     SELECT 1
     FROM information_schema.COLUMNS
@@ -48,16 +44,10 @@ try {
   if ($q && $q->fetchColumn()) {
     $hasSoftDelete = true;
   } else {
-    // Fallback SHOW COLUMNS (in case permissions differ)
     $q = $pdo->query("SHOW COLUMNS FROM contact_messages LIKE 'is_deleted'");
-    if ($q && $q->fetch(PDO::FETCH_ASSOC)) {
-      $hasSoftDelete = true;
-    }
+    if ($q && $q->fetch(PDO::FETCH_ASSOC)) $hasSoftDelete = true;
   }
-} catch (Throwable $e) {
-  // If detection fails, assume column is absent; code still works (archives instead of remove)
-  $hasSoftDelete = false;
-}
+} catch (Throwable $e) { $hasSoftDelete = false; }
 
 // ---------- Actions via POST only ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -84,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$id]);
         $message = "Message removed."; $message_type = "success";
       } else {
-        // Archive fallback if is_deleted column doesn't exist
         $stmt = $pdo->prepare("UPDATE contact_messages SET is_read = 1 WHERE id = ?");
         $stmt->execute([$id]);
         $message = "Message archived (soft remove)."; $message_type = "success";
@@ -161,17 +150,44 @@ if (isset($_GET['view'])) {
       --accent:#FD7238; --accent-light:#FF8A5B;
       --ink:#1A202C; --ink-light:#2D3748;
       --soft:#F7FAFC; --soft-dark:#EDF2F7; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.06);
+
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hero:    linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.85) 100%);
+      --gradient-hover:   linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+
+      --shadow-soft:   0 6px 16px rgba(0,0,0,.06);
       --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
+      --shadow-large:  0 20px 40px rgba(0,0,0,.12);
+      --shadow-glow:   0 0 40px rgba(60,145,230,.15);
     }
+
     html{scroll-behavior:smooth}
-    body{ background:var(--soft); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
+    body{ background:linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
+
+    /* Utilities */
+    .glass{ background:rgba(255,255,255,.1); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.2); border-radius:12px; }
+    .btn-gradient{
+      background: var(--gradient-primary); border:none; color:#fff; border-radius:14px; padding:.9rem 1rem; font-weight:600;
+      box-shadow: var(--shadow-glow); transition: all .3s ease; position:relative; overflow:hidden;
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, rgba(255,255,255,.1) 100%);
+      transition:left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform:translateY(-2px); color:#fff; box-shadow:var(--shadow-large); }
+    .btn-outline-primary{
+      border:2px solid #E2E8F0; border-radius:12px; background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-primary:hover{
+      background: var(--gradient-hover); border-color:transparent; color:#fff; transform:translateY(-1px);
+    }
 
     /* Sidebar */
     .sidebar{
       width: 280px; min-height: 100vh; background:#fff; border-right:1px solid rgba(0,0,0,.06);
-      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column;
+      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column; box-shadow:var(--shadow-soft);
     }
     .sidebar .brand{ background:var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700; font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem; }
     .sidebar .menu{ padding:1rem; overflow-y:auto; }
@@ -179,13 +195,17 @@ if (isset($_GET['view'])) {
     .sidebar .nav-link:hover{ background:rgba(60,145,230,.08); color:var(--brand); transform:translateX(2px); }
     .sidebar .nav-link.active{ background:rgba(60,145,230,.14); color:var(--brand-dark); }
 
-    /* Topbar */
+    /* Topbar (gradient + white) */
     .topbar{
-      height:72px; background:#fff; border-bottom:1px solid rgba(0,0,0,.06);
+      height:72px; background:var(--gradient-hero); color:#fff;
+      border-bottom:1px solid rgba(255,255,255,.2);
       display:flex; align-items:center; justify-content:flex-end;
-      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-soft);
+      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-medium);
     }
-    .topbar .hamburger{ display:none; border:0; background:transparent; }
+    .topbar .hamburger{ display:none; border:0; background:transparent; color:#fff; }
+    .topbar .dropdown-toggle{ color:#fff; }
+    .topbar .dropdown-toggle i{ color:#fff !important; }
+    .topbar .dropdown-toggle span{ color:#fff; } /* Admin name white */
 
     /* Main */
     .main{ padding:1.25rem; margin-left:280px; }
@@ -195,7 +215,14 @@ if (isset($_GET['view'])) {
     .card .card-title{ font-weight:700; }
 
     /* Header banner */
-    .admin-hero{ background:var(--gradient-primary); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); }
+    .admin-hero{ background:var(--gradient-hero); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); position:relative; overflow:hidden; }
+    .admin-hero::after{
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
+        radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+    }
 
     /* Table / badges */
     .badge-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
@@ -236,7 +263,7 @@ if (isset($_GET['view'])) {
     <button class="hamburger" id="toggleSidebar" aria-label="Toggle sidebar"><i class="bx bx-menu fs-3"></i></button>
     <div class="dropdown ms-auto">
       <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bx bxs-user-circle fs-3 me-2 text-primary"></i>
+        <i class="bx bxs-user-circle fs-3 me-2 text-white"></i>
         <span><?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin', ENT_QUOTES); ?></span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="adminMenu">
@@ -259,7 +286,7 @@ if (isset($_GET['view'])) {
             <div class="opacity-75">View, mark as read/unread, and remove incoming messages.</div>
           </div>
           <div class="d-flex gap-2">
-            <a href="../index.php#contact" target="_blank" class="btn btn-light text-primary fw-semibold">
+            <a href="../index.php#contact" target="_blank" class="btn btn-gradient">
               <i class="bx bx-show me-1"></i> View Site
             </a>
           </div>
@@ -267,7 +294,7 @@ if (isset($_GET['view'])) {
       </div>
 
       <?php if (!empty($message)): ?>
-        <div class="alert alert-<?php echo $message_type==='success'?'success':'danger'; ?> alert-dismissible fade show" role="alert" data-aos="fade-up">
+        <div class="alert alert-<?php echo $message_type==='success'?'success':'danger'; ?> alert-dismissible fade show glass" role="alert" data-aos="fade-up">
           <?php echo htmlspecialchars($message, ENT_QUOTES); ?>
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -333,11 +360,11 @@ if (isset($_GET['view'])) {
                       <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf'], ENT_QUOTES); ?>">
                       <input type="hidden" name="id" value="<?php echo (int)$m['id']; ?>">
                       <?php if (empty($m['is_read'])): ?>
-                        <button name="action" value="mark_read" class="btn btn-sm btn-outline-success ms-1" title="Mark as read">
+                        <button name="action" value="mark_read" class="btn btn-sm btn-outline-primary ms-1" title="Mark as read">
                           <i class="bx bx-check"></i>
                         </button>
                       <?php else: ?>
-                        <button name="action" value="mark_unread" class="btn btn-sm btn-outline-secondary ms-1" title="Mark as unread">
+                        <button name="action" value="mark_unread" class="btn btn-sm btn-outline-primary ms-1" title="Mark as unread">
                           <i class="bx bx-refresh"></i>
                         </button>
                       <?php endif; ?>
@@ -388,9 +415,9 @@ if (isset($_GET['view'])) {
           <form method="post" id="markReadForm" class="d-inline">
             <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf'], ENT_QUOTES); ?>">
             <input type="hidden" name="id" id="vId">
-            <button type="submit" name="action" value="mark_read" class="btn btn-success">Mark as Read</button>
+            <button type="submit" name="action" value="mark_read" class="btn btn-gradient">Mark as Read</button>
           </form>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
@@ -407,7 +434,7 @@ if (isset($_GET['view'])) {
   <script>
     AOS.init({ duration: 700, once: true });
 
-    // Toastr defaults (optional)
+    // Toastr defaults
     toastr.options = {
       closeButton: true, progressBar: true, newestOnTop: true, preventDuplicates: true,
       positionClass: "toast-top-right", timeOut: 3500, extendedTimeOut: 1500
@@ -443,17 +470,15 @@ if (isset($_GET['view'])) {
       viewModal.addEventListener('show.bs.modal', function (event) {
         const btn = event.relatedTarget;
         const id = btn.getAttribute('data-id');
-        document.getElementById('vName').textContent = btn.getAttribute('data-name') || '';
-        document.getElementById('vEmail').textContent = btn.getAttribute('data-email') || '';
-        document.getElementById('vPhone').textContent = btn.getAttribute('data-phone') || '';
-        document.getElementById('vLocation').textContent = btn.getAttribute('data-location') || '';
-        document.getElementById('vType').textContent = btn.getAttribute('data-type') || '';
-        document.getElementById('vFirst').textContent = btn.getAttribute('data-first') || '';
+        document.getElementById('vName').textContent    = btn.getAttribute('data-name') || '';
+        document.getElementById('vEmail').textContent   = btn.getAttribute('data-email') || '';
+        document.getElementById('vPhone').textContent   = btn.getAttribute('data-phone') || '';
+        document.getElementById('vLocation').textContent= btn.getAttribute('data-location') || '';
+        document.getElementById('vType').textContent    = btn.getAttribute('data-type') || '';
+        document.getElementById('vFirst').textContent   = btn.getAttribute('data-first') || '';
         document.getElementById('vCreated').textContent = btn.getAttribute('data-created') || '';
         document.getElementById('vMessage').textContent = btn.getAttribute('data-message') || '';
-        // For Mark-as-Read POST form
-        const idInput = document.getElementById('vId');
-        if (idInput) idInput.value = id || '';
+        const idInput = document.getElementById('vId'); if (idInput) idInput.value = id || '';
       });
     });
   </script>

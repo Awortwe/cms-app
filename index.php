@@ -91,8 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
     :root{
       --brand: #3C91E6;
       --brand-dark: #2B6CB0;
-      --accent: #FD7238;
-      --accent-light: #FF8A5B;
+      --accent: #3C91E6;
+      --accent-light: #5BA3EE;
+      --orange: #FD7238;
+      --orange-light: #FF8A5B;
       --ink: #1A202C;
       --ink-light: #2D3748;
       --soft: #F7FAFC;
@@ -101,8 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       --success: #48BB78;
       --warning: #ED8936;
       --danger: #F56565;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --gradient-hero: linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(253,114,56,0.8) 100%);
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover: linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero: linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.8) 100%);
       --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
       --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -164,10 +167,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
     }
 
     .btn-gradient:hover {
+      background: var(--gradient-hover);
       transform: translateY(-2px);
       box-shadow: var(--shadow-large);
       color: white;
     }
+
     /* ============ NAVBAR ============ */
 
     /* Admin icon link (subtle) */
@@ -246,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       inset: 0;
       background: 
         radial-gradient(circle at 30% 20%, rgba(60, 145, 230, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 70% 80%, rgba(253, 114, 56, 0.3) 0%, transparent 50%);
+        radial-gradient(circle at 70% 80%, rgba(43, 108, 176, 0.3) 0%, transparent 50%);
       animation: heroFloat 8s ease-in-out infinite;
     }
 
@@ -328,10 +333,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       box-shadow: var(--shadow-glow);
     }
 
+    .btn-cta-primary:hover {
+      background: var(--gradient-hover);
+      color: white;
+    }
+
     .btn-cta-outline {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+
+    .btn-cta-outline:hover {
+      background: var(--gradient-hover);
+      border-color: transparent;
       color: white;
     }
 
@@ -425,6 +441,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       transform: scale(1.05);
     }
 
+    /* Button hovers in cards */
+    .card .btn-gradient:hover,
+    .card .btn-outline-primary:hover {
+      background: var(--gradient-hover);
+      border-color: transparent;
+      color: white;
+    }
+
+    .btn-outline-primary {
+      transition: all 0.3s ease;
+    }
+
+    .btn-outline-primary:hover {
+      background: var(--gradient-hover);
+      border-color: transparent;
+      color: white;
+      transform: translateY(-2px);
+    }
+
     /* ============ BADGES ============ */
     .badge-soft {
       background: rgba(60, 145, 230, 0.1);
@@ -463,7 +498,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
     .sermon-media-fixed video {
       width: 100%;
       height: 100%;
-      object-fit: contain;   /* show full image without cutting */
+      object-fit: contain;
       background: #000; 
       transition: transform 0.4s ease;
     }
@@ -551,6 +586,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       margin-bottom: 0.75rem;
     }
 
+    /* Contact form button hover */
+    .contact-form .btn-gradient:hover {
+      background: var(--gradient-hover);
+    }
+
     /* ============ ANIMATIONS ============ */
     .floating {
       animation: floating 3s ease-in-out infinite;
@@ -588,6 +628,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
     }
 
     #toTop:hover {
+      background: var(--gradient-hover);
       transform: translateY(-5px) scale(1.1);
       box-shadow: var(--shadow-large);
     }
@@ -626,12 +667,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
     }
 
     .social-links i:hover {
-      color: var(--accent-light);
+      color: var(--orange-light);
       transform: scale(1.2);
     }
 
     /* ============ RESPONSIVE ============ */
     @media (max-width: 768px) {
+      .hero-hero {
+        padding: 2rem 1rem;
+      }
+
       .hero-title {
         font-size: 2.5rem;
       }
@@ -639,15 +684,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       .hero-description {
         font-size: 1.1rem;
       }
+
+      .hero-buttons {
+        padding: 0 1rem;
+      }
+
+      .btn-cta {
+        width: 100%;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+      }
       
       .contact-form {
         padding: 2rem;
-        margin: 1rem;
+        margin: 0;
       }
       
-      .btn-cta {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.9rem;
+      /* Make contact section full width on mobile */
+      #contact .col-lg-8 {
+        max-width: 100%;
+        padding-left: 0;
+        padding-right: 0;
       }
     }
 
@@ -684,7 +742,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
   <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center gap-2" href="#home">
-        <i class="bx bxs-book-heart text-primary fs-2 floating"></i>
         <span class="text-gradient">Bro. Dr. Dan O. Asiamah</span>
       </a>
       <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -1012,9 +1069,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
 
   <!-- CONTACT SECTION -->
   <section id="contact" class="py-5">
-    <div class="container">
+    <div class="container-fluid px-md-5">
       <div class="row mb-5">
-        <div class="col-lg-8 mx-auto text-center" data-aos="fade-up">
+        <div class="col-lg-8 mx-auto text-center px-3" data-aos="fade-up">
           <h2 class="section-title text-gradient">Get in Touch</h2>
           <p class="lead text-muted">Connect with us for revival requests, prayer needs, or ministry inquiries. We'd love to hear from you!</p>
         </div>
@@ -1022,7 +1079,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
 
       <?php if (!empty($contact_alert)): ?>
         <div class="row mb-4" data-aos="fade-up">
-          <div class="col-lg-8 mx-auto">
+          <div class="col-lg-8 mx-auto px-3">
             <div class="alert alert-<?php echo $contact_alert['type']==='success'?'success':'danger'; ?> alert-dismissible fade show glass" role="alert">
               <i class="bx <?php echo $contact_alert['type']==='success'?'bxs-check-circle':'bxs-error-circle'; ?> me-2"></i>
               <?php echo htmlspecialchars($contact_alert['text']); ?>
@@ -1033,7 +1090,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       <?php endif; ?>
 
       <div class="row">
-        <div class="col-lg-8 mx-auto" data-aos="fade-up" data-aos-delay="200">
+        <div class="col-lg-8 mx-auto px-3" data-aos="fade-up" data-aos-delay="200">
           <div class="contact-form">
             <form method="post" action="#contact" novalidate>
               <input type="hidden" name="contact_submit" value="1">
@@ -1170,7 +1227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
               rel="noopener noreferrer">
               <i class="bx bxl-youtube"></i>
             </a>
-            <a href="#" class="text-decoration-none" title="Instagram">
+            <a href="#" class="text-decoration-none" title="TikTok">
               <i class="bx bxl-tiktok"></i>
             </a>
 

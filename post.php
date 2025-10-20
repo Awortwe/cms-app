@@ -56,16 +56,24 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
 
   <style>
     :root{
+      /* === Copied from index.php for consistency === */
       --brand: #3C91E6;
       --brand-dark: #2B6CB0;
-      --accent: #FD7238;
-      --accent-light: #FF8A5B;
+      --accent: #3C91E6;
+      --accent-light: #5BA3EE;
+      --orange: #FD7238;
+      --orange-light: #FF8A5B;
       --ink: #1A202C;
       --ink-light: #2D3748;
       --soft: #F7FAFC;
       --soft-dark: #EDF2F7;
       --white: #FFFFFF;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
+      --success: #48BB78;
+      --warning: #ED8936;
+      --danger: #F56565;
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover: linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero: linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.8) 100%);
       --shadow-soft: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
       --shadow-medium: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
       --shadow-large: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
@@ -101,7 +109,8 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
       border-bottom:1px solid rgba(255,255,255,.1);
     }
     .navbar.scrolled{ box-shadow: var(--shadow-medium); background: rgba(255,255,255,.98)!important; }
-    .navbar-brand{ font-family:'Playfair Display',serif; font-weight:700; font-size:1.5rem; }
+    .navbar-brand{ font-family:'Playfair Display',serif; font-weight:700; font-size:1.5rem; transition: transform .3s ease; }
+    .navbar-brand:hover{ transform: scale(1.05); }
     .nav-link{ position:relative; font-weight:500; margin:0 .5rem; padding:.7rem 1rem!important; }
     .nav-link::before{
       content:''; position:absolute; bottom:0; left:50%;
@@ -110,6 +119,9 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
     }
     .nav-link:hover::before,.nav-link.active::before{ width:80%; }
     .nav-link:hover{ color:var(--brand)!important; transform:translateY(-1px); }
+    /* Admin icon link (subtle), optional */
+    .navbar .nav-link.admin-link i { font-size: 1.25rem; opacity: .45; transition: .2s ease; }
+    .navbar .nav-link.admin-link:hover i { opacity: 1; transform: translateY(-1px); color: var(--brand); }
 
     /* HERO header (post cover background) */
     .post-hero{
@@ -117,11 +129,14 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
       display:flex; align-items:flex-end;
       position:relative; overflow:hidden; color:white;
       background:
-        linear-gradient(135deg, rgba(60,145,230,.65) 0%, rgba(253,114,56,.55) 100%),
+        var(--gradient-hero),
         var(--post-bg) center/cover no-repeat;
     }
     .post-hero::after{
-      content:''; position:absolute; inset:0; background: rgba(0,0,0,.25);
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(60,145,230,0.25) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(43,108,176,0.25) 0%, transparent 50%);
     }
     .post-hero .container{ position:relative; z-index:2; }
     .post-title{
@@ -129,12 +144,21 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
       text-shadow: 2px 2px 4px rgba(0,0,0,.3);
     }
     .post-meta{
-      color: rgba(255,255,255,.9);
+      color: rgba(255,255,255,.92);
       text-shadow: 1px 1px 2px rgba(0,0,0,.25);
+    }
+    .badge-date{
+      background: rgba(255,255,255,.15);
+      border:1px solid rgba(255,255,255,.3);
+      color:#fff;
     }
 
     /* CONTENT area */
-    .section-muted{ background: linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); }
+    .section-muted{ background: linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); position: relative; }
+    .section-muted::before{
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background: linear-gradient(90deg, transparent, var(--brand), transparent);
+    }
     .card{
       border:none; border-radius:20px; box-shadow:var(--shadow-soft);
       transition: all .4s cubic-bezier(.4,0,.2,1); overflow:hidden; background:white; position:relative;
@@ -144,11 +168,9 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
       background:var(--gradient-primary); transform: scaleX(0); transition: transform .3s ease;
     }
     .card:hover::before{ transform: scaleX(1); }
-    .card:hover{ transform: translateY(-6px); box-shadow: var(--shadow-large); }
+    .card:hover{ transform: translateY(-8px) scale(1.02); box-shadow: var(--shadow-large); }
     .content-body{ font-size:1.05rem; color:#2D3748; }
     .content-body p{ margin-bottom:1rem; }
-
-    .badge-date{ background: rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); }
 
     /* COMMENTS */
     .comment{ border:1px solid #E2E8F0; border-radius:14px; background:#fff; }
@@ -163,27 +185,47 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
       box-shadow: 0 0 0 .2rem rgba(60,145,230,.15);
       background:white;
     }
-    .btn-gradient{ background:var(--gradient-primary); color:white; border:none; }
-    .btn-gradient:hover{ box-shadow:var(--shadow-large); transform: translateY(-2px); color:white; }
 
-    /* SIDEBAR list */
+    .btn-gradient{
+      background:var(--gradient-primary);
+      color:white; border:none; transition: all .3s ease; position: relative; overflow: hidden;
+      box-shadow: var(--shadow-glow);
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+      transition: left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform: translateY(-2px); color:white; box-shadow: var(--shadow-large); }
+
+    /* SIDEBAR */
     .sidebar-card{ background:white; border-radius:20px; box-shadow:var(--shadow-soft); }
 
-    /* FOOTER */
+    /* UTILITIES (match index.php) */
+    .text-shadow{ text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+    .backdrop-blur{ backdrop-filter: blur(10px); }
+    .glass{
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+    }
+    .loading{ opacity:0; transform:translateY(24px); transition: all .6s ease; }
+    .loaded{ opacity:1; transform:translateY(0); }
+
+    /* FOOTER (match index.php style) */
     footer{
       background: linear-gradient(135deg, var(--ink) 0%, var(--ink-light) 100%);
       color:white; position:relative;
     }
     footer::before{
       content:''; position:absolute; top:0; left:0; right:0; height:1px;
-      background: linear-gradient(90deg, transparent, var(--brand), transparent);
+      background: var(--gradient-primary);
     }
     footer a{ color:rgba(255,255,255,.85); text-decoration:none; transition:.3s; }
     footer a:hover{ color:var(--accent-light); transform: translateY(-2px); }
 
-    /* UTIL / AOS tweaks */
-    .loading{ opacity:0; transform:translateY(24px); transition: all .6s ease; }
-    .loaded{ opacity:1; transform:translateY(0); }
     @media (max-width: 768px){
       .post-title{ font-size:2rem; }
     }
@@ -208,6 +250,12 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
           <li class="nav-item"><a class="nav-link" href="index.php#sermons">Sermons</a></li>
           <li class="nav-item"><a class="nav-link active" href="index.php#posts">Posts</a></li>
           <li class="nav-item"><a class="nav-link" href="index.php#contact">Contact</a></li>
+          <!-- Optional admin icon like index.php -->
+          <li class="nav-item">
+            <a class="nav-link admin-link px-2" href="admin/login.php" title="Admin" aria-label="Admin login">
+              <i class="bx bxs-lock-alt" aria-hidden="true"></i>
+            </a>
+          </li>
         </ul>
       </div>
     </div>
@@ -218,9 +266,7 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="container">
       <div class="row">
         <div class="col-lg-10">
-          <?php
-            $date = date('d M Y', strtotime($post['created_at']));
-          ?>
+          <?php $date = date('d M Y', strtotime($post['created_at'])); ?>
           <span class="badge badge-date rounded-pill px-3 py-2 mb-3 d-inline-block"><?php echo $date; ?></span>
           <h1 class="post-title mb-3"><?php echo htmlspecialchars($post['title']); ?></h1>
           <?php if (!empty($post['excerpt'])): ?>
@@ -244,8 +290,7 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="content-body">
               <?php
-                // BACKEND CONTENT OUTPUT UNCHANGED
-                // allows basic formatting already saved in DB (e.g., paragraphs, line breaks):
+                // BACKEND CONTENT OUTPUT UNCHANGED (keeps formatting saved in DB)
                 echo nl2br($post['content']);
               ?>
             </div>
@@ -347,11 +392,11 @@ $comments = $cstmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
 
         <div class="col-md-4 text-md-end">
-          <div class="d-flex justify-content-md-end justify-content-center gap-3">
-            <a href="#" class="text-decoration-none"><i class="bx bxl-facebook-circle fs-4"></i></a>
-            <a href="#" class="text-decoration-none"><i class="bx bxl-youtube fs-4"></i></a>
-            <a href="#" class="text-decoration-none"><i class="bx bxl-instagram fs-4"></i></a>
-            <a href="#" class="text-decoration-none"><i class="bx bxl-whatsapp fs-4"></i></a>
+          <div class="d-flex justify-content-md-end justify-content-center gap-3 social-links">
+            <a href="#" class="text-decoration-none" title="Facebook"><i class="bx bxl-facebook-circle fs-4"></i></a>
+            <a href="#" class="text-decoration-none" title="YouTube"><i class="bx bxl-youtube fs-4"></i></a>
+            <a href="#" class="text-decoration-none" title="Instagram"><i class="bx bxl-instagram fs-4"></i></a>
+            <a href="#" class="text-decoration-none" title="WhatsApp"><i class="bx bxl-whatsapp fs-4"></i></a>
           </div>
         </div>
       </div>

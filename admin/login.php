@@ -88,30 +88,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <style>
     :root{
-      --brand:#3C91E6; --brand-dark:#2B6CB0;
-      --accent:#FD7238; --accent-light:#FF8A5B;
-      --ink:#1A202C; --ink-light:#2D3748;
-      --soft:#F7FAFC; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.08);
-      --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
+      /* === Unified tokens (copied from index.php) === */
+      --brand: #3C91E6;
+      --brand-dark: #2B6CB0;
+      --accent: #3C91E6;
+      --accent-light: #5BA3EE;
+      --orange: #FD7238;
+      --orange-light: #FF8A5B;
+      --ink: #1A202C;
+      --ink-light: #2D3748;
+      --soft: #F7FAFC;
+      --soft-dark: #EDF2F7;
+      --white: #FFFFFF;
+      --success: #48BB78;
+      --warning: #ED8936;
+      --danger: #F56565;
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hover: linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+      --gradient-hero: linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.8) 100%);
+      --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --shadow-glow: 0 0 40px rgba(60, 145, 230, 0.15);
     }
-    html, body { height:100%; }
+
+    html, body { height:100%; scroll-behavior:smooth; }
     body{
       display:flex; align-items:center; justify-content:center;
-      background:var(--soft); color:var(--ink); font-family:'Inter',sans-serif;
+      background: linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); 
+      color:var(--ink); font-family:'Inter',sans-serif;
       padding:1rem;
     }
 
+    /* Card wrapper */
     .auth-wrap{
-      width:100%; max-width:980px; border-radius:22px; overflow:hidden; box-shadow:var(--shadow-medium); background:#fff;
+      width:100%; max-width:980px; border-radius:24px; overflow:hidden; 
+      box-shadow:var(--shadow-large); background:#fff;
       display:grid; grid-template-columns: 1fr; position:relative;
     }
     @media(min-width: 992px){
       .auth-wrap{ grid-template-columns: 1.2fr .8fr; }
     }
 
-    .auth-body{ padding:2rem 1.5rem; }
+    /* Left panel (form) */
+    .auth-body{ padding:2rem 1.5rem; position:relative; }
     @media(min-width: 768px){ .auth-body{ padding:3rem; } }
 
     .brand{
@@ -124,39 +144,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .form-control{
-      border:2px solid #E2E8F0; border-radius:12px; padding:.9rem 1rem; background:#FAFAFA; transition:.2s;
+      border:2px solid #E2E8F0; border-radius:12px; padding:.95rem 1.1rem; background:#FAFAFA; transition:.2s;
     }
     .form-control:focus{ border-color:var(--brand); box-shadow:0 0 0 .2rem rgba(60,145,230,.15); background:#fff; }
-    .btn-primary{
-      --bs-btn-bg:var(--brand); --bs-btn-border-color:var(--brand);
-      --bs-btn-hover-bg:var(--brand-dark); --bs-btn-hover-border-color:var(--brand-dark);
-      border-radius:12px; padding:.85rem 1rem; font-weight:600;
-      box-shadow:var(--shadow-soft);
+    .form-label{ font-weight:600; color:var(--ink); }
+
+    /* Button gradient to match index.php */
+    .btn-gradient{
+      background: var(--gradient-primary);
+      border: none;
+      color: white;
+      border-radius:12px; 
+      padding:.95rem 1rem;
+      font-weight:600;
+      box-shadow: var(--shadow-glow);
+      transition: all .3s ease;
+      position: relative; overflow: hidden;
     }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+      transition: left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform: translateY(-2px); color:#fff; box-shadow: var(--shadow-large); }
+
+    /* Outline button for password toggle */
+    .btn-outline-secondary{
+      border:2px solid #E2E8F0; border-radius:12px;
+      background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-secondary:hover{
+      background: var(--gradient-hover); border-color: transparent; color:#fff;
+      transform: translateY(-1px);
+    }
+
     .muted{ color:#64748B; }
 
-    /* Right panel */
+    /* Right panel (hero-ish) */
     .auth-aside{
-      position:relative; background:var(--gradient-primary); color:#fff;
+      position:relative; 
+      background: var(--gradient-hero); 
+      color:#fff;
       display:none; align-items:center; justify-content:center; padding:2rem;
+      overflow:hidden;
     }
     @media(min-width: 992px){
       .auth-aside{ display:flex; }
     }
-    .aside-inner{ text-align:center; }
+    .aside-inner{ text-align:center; z-index:2; }
+    .aside-inner i{ text-shadow: 0 10px 30px rgba(0,0,0,.25); }
     .aside-shape{
-      position:absolute; inset:0; background: radial-gradient(1000px 600px at 80% -10%, rgba(255,255,255,.15), transparent);
-      pointer-events:none;
+      position:absolute; inset:0; 
+      background:
+        radial-gradient(800px 500px at 30% 20%, rgba(60,145,230,.25), transparent 60%),
+        radial-gradient(700px 400px at 80% 80%, rgba(43,108,176,.28), transparent 60%);
+      pointer-events:none; z-index:1;
+    }
+
+    /* Subtle “glass” alerts (consistent with index.php) */
+    .glass{
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
     }
 
     /* Back link subtle style */
-    .back-link { opacity:.75; }
-    .back-link:hover { opacity:1; text-decoration:none; }
+    .back-link { opacity:.8; text-decoration:none; transition:.2s; }
+    .back-link:hover { opacity:1; color: var(--accent); }
+
+    /* Small loading entrance */
+    .loading{ opacity:0; transform: translateY(24px); transition: all .6s ease; }
+    .loaded{ opacity:1; transform: translateY(0); }
   </style>
 </head>
 <body>
 
-  <div class="auth-wrap">
+  <div class="auth-wrap loading">
     <!-- Left: form -->
     <div class="auth-body">
       <div class="d-flex justify-content-between align-items-start">
@@ -171,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
       </div>
 
-      <h1 class="h4 fw-bold mb-2">Welcome back</h1>
+      <h1 class="h4 fw-bold mb-2 text-gradient">Welcome back</h1>
       <p class="muted mb-4">Sign in to continue to your dashboard.</p>
 
       <form action="login.php" method="post" autocomplete="off" novalidate>
@@ -194,7 +259,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="d-grid mt-4">
-          <button class="btn btn-primary btn-lg" type="submit">
+          <!-- Switched to btn-gradient for unified look -->
+          <button class="btn btn-gradient btn-lg" type="submit">
             <i class="bx bx-log-in-circle me-1"></i> Sign In
           </button>
         </div>
@@ -204,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Forgot your password? Contact a super admin to reset.
       </div>
 
-      <!-- Secondary back link for mobile (optional, can remove if you prefer only the top one) -->
+      <!-- Secondary back link for mobile -->
       <div class="mt-3 d-lg-none">
         <a href="../index.php" class="btn btn-link p-0 text-decoration-none">
           <i class="bx bx-left-arrow-alt me-1"></i> Back to Website
@@ -212,7 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
 
-    <!-- Right: now just the icon (no heading/paragraph) -->
+    <!-- Right: gradient panel with soft radial highlights -->
     <aside class="auth-aside">
       <div class="aside-inner">
         <i class="bx bxs-shield-alt-2 fs-1"></i>
@@ -226,7 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
   <script>
-    // Toastr defaults
+    // Toastr defaults (same feel across the site)
     if (window.toastr) {
       toastr.options = {
         closeButton: true, progressBar: true, newestOnTop: true, preventDuplicates: true,
@@ -244,6 +310,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       icon.classList.toggle('bx-low-vision', !isPwd);
       icon.classList.toggle('bx-show', isPwd);
     }
+
+    // Simple entrance animation for the card
+    window.addEventListener('load', () => {
+      const wrap = document.querySelector('.auth-wrap');
+      if (wrap) setTimeout(()=> wrap.classList.add('loaded'), 100);
+    });
   </script>
 
   <?php if (!empty($error_message)): ?>

@@ -86,7 +86,6 @@ if (isset($_POST['update_admin'])) {
       $ok = $stmt->execute([$name, $email, $id]);
     }
     if ($ok) {
-      // If user edited themselves, optionally refresh session name/email
       if (!empty($_SESSION['admin_id']) && (int)$_SESSION['admin_id'] === $id) {
         $_SESSION['admin_name'] = $name;
       }
@@ -103,7 +102,7 @@ if (isset($_POST['update_admin'])) {
 if (isset($_GET['delete'])) {
   $id = (int)$_GET['delete'];
 
-  // Prevent deleting self (if session id available)
+  // Prevent deleting self
   if (!empty($_SESSION['admin_id']) && (int)$_SESSION['admin_id'] === $id) {
     $message = "You cannot delete the account you are currently logged into.";
     $message_type = "error";
@@ -164,17 +163,43 @@ if (isset($_GET['edit'])) {
       --accent:#FD7238; --accent-light:#FF8A5B;
       --ink:#1A202C; --ink-light:#2D3748;
       --soft:#F7FAFC; --soft-dark:#EDF2F7; --white:#fff;
-      --gradient-primary: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-      --shadow-soft: 0 6px 16px rgba(0,0,0,.06);
+
+      --gradient-primary: linear-gradient(135deg, #2B6CB0 0%, #3C91E6 100%);
+      --gradient-hero:    linear-gradient(135deg, rgba(60,145,230,0.9) 0%, rgba(43,108,176,0.85) 100%);
+      --gradient-hover:   linear-gradient(135deg, #FD7238 0%, #FF8A5B 100%);
+
+      --shadow-soft:   0 6px 16px rgba(0,0,0,.06);
       --shadow-medium: 0 10px 24px rgba(0,0,0,.10);
+      --shadow-large:  0 20px 40px rgba(0,0,0,.12);
+      --shadow-glow:   0 0 40px rgba(60,145,230,.15);
     }
     html{scroll-behavior:smooth}
-    body{ background:var(--soft); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
+    body{ background:linear-gradient(135deg, var(--soft) 0%, var(--soft-dark) 100%); color:var(--ink); font-family:'Inter',sans-serif; overflow-x:hidden; }
 
-    /* Sidebar (match home.php) */
+    /* Utilities */
+    .glass{ background:rgba(255,255,255,.1); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.2); border-radius:12px; }
+    .btn-gradient{
+      background: var(--gradient-primary); border:none; color:#fff; border-radius:14px; padding:.9rem 1rem; font-weight:600;
+      box-shadow: var(--shadow-glow); transition: all .3s ease; position:relative; overflow:hidden;
+    }
+    .btn-gradient::before{
+      content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, rgba(255,255,255,.1) 100%);
+      transition:left .6s ease;
+    }
+    .btn-gradient:hover::before{ left:100%; }
+    .btn-gradient:hover{ background: var(--gradient-hover); transform:translateY(-2px); color:#fff; box-shadow:var(--shadow-large); }
+    .btn-outline-primary{
+      border:2px solid #E2E8F0; border-radius:12px; background:#fff; color:#2D3748; transition:.25s;
+    }
+    .btn-outline-primary:hover{
+      background: var(--gradient-hover); border-color:transparent; color:#fff; transform:translateY(-1px);
+    }
+
+    /* Sidebar (match theme) */
     .sidebar{
       width: 280px; min-height: 100vh; background:#fff; border-right:1px solid rgba(0,0,0,.06);
-      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column;
+      position: fixed; left:0; top:0; z-index:100; display:flex; flex-direction:column; box-shadow:var(--shadow-soft);
     }
     .sidebar .brand{ background:var(--gradient-primary); color:#fff; padding:1rem 1.25rem; font-weight:700; font-family:'Playfair Display',serif; display:flex; align-items:center; gap:.5rem; }
     .sidebar .menu{ padding:1rem; overflow-y:auto; }
@@ -182,13 +207,17 @@ if (isset($_GET['edit'])) {
     .sidebar .nav-link:hover{ background:rgba(60,145,230,.08); color:var(--brand); transform:translateX(2px); }
     .sidebar .nav-link.active{ background:rgba(60,145,230,.14); color:var(--brand-dark); }
 
-    /* Topbar */
+    /* Topbar (gradient + white) */
     .topbar{
-      height:72px; background:#fff; border-bottom:1px solid rgba(0,0,0,.06);
+      height:72px; background:var(--gradient-hero); color:#fff;
+      border-bottom:1px solid rgba(255,255,255,.2);
       display:flex; align-items:center; justify-content:flex-end;
-      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-soft);
+      padding:0 1rem; position:fixed; top:0; right:0; left:280px; z-index:90; box-shadow:var(--shadow-medium);
     }
-    .topbar .hamburger{ display:none; border:0; background:transparent; }
+    .topbar .hamburger{ display:none; border:0; background:transparent; color:#fff; }
+    .topbar .dropdown-toggle{ color:#fff; }
+    .topbar .dropdown-toggle i{ color:#fff !important; } /* icon white */
+    .topbar .dropdown-toggle span{ color:#fff; }         /* admin name white */
 
     /* Main */
     .main{ padding:1.25rem; margin-left:280px; }
@@ -198,7 +227,14 @@ if (isset($_GET['edit'])) {
     .card .card-title{ font-weight:700; }
 
     /* Header banner */
-    .admin-hero{ background:var(--gradient-primary); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); }
+    .admin-hero{ background:var(--gradient-hero); color:#fff; border-radius:20px; padding:1.5rem 1.75rem; box-shadow:var(--shadow-medium); position:relative; overflow:hidden; }
+    .admin-hero::after{
+      content:''; position:absolute; inset:0;
+      background:
+        radial-gradient(800px 200px at 0% 0%, rgba(255,255,255,.15), transparent 60%),
+        radial-gradient(800px 200px at 100% 100%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+    }
 
     /* Form fields */
     .form-control, .form-select{ border:2px solid #E2E8F0; border-radius:12px; padding:0.9rem 1rem; background:#FAFAFA; transition:.2s; }
@@ -244,7 +280,7 @@ if (isset($_GET['edit'])) {
     <button class="hamburger" id="toggleSidebar" aria-label="Toggle sidebar"><i class="bx bx-menu fs-3"></i></button>
     <div class="dropdown ms-auto">
       <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bx bxs-user-circle fs-3 me-2 text-primary"></i>
+        <i class="bx bxs-user-circle fs-3 me-2 text-white"></i>
         <span><?php echo htmlspecialchars($_SESSION['admin_name']); ?></span>
       </a>
       <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="adminMenu">
@@ -268,7 +304,7 @@ if (isset($_GET['edit'])) {
           </div>
           <div class="d-flex gap-2">
             <?php if (!empty($_SESSION['admin_id'])): ?>
-              <a href="admins.php?edit=<?php echo (int)$_SESSION['admin_id']; ?>" class="btn btn-light text-primary fw-semibold">
+              <a href="admins.php?edit=<?php echo (int)$_SESSION['admin_id']; ?>" class="btn btn-gradient">
                 <i class="bx bx-user me-1"></i> Edit My Profile
               </a>
             <?php endif; ?>
@@ -277,7 +313,7 @@ if (isset($_GET['edit'])) {
       </div>
 
       <?php if (!empty($message)): ?>
-        <div class="alert alert-<?php echo $message_type==='success'?'success':'danger'; ?> alert-dismissible fade show" role="alert" data-aos="fade-up">
+        <div class="alert alert-<?php echo $message_type==='success'?'success':'danger'; ?> alert-dismissible fade show glass" role="alert" data-aos="fade-up">
           <?php echo htmlspecialchars($message); ?>
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -313,13 +349,13 @@ if (isset($_GET['edit'])) {
           <div class="sticky-actions mt-4">
             <?php if ($edit_admin): ?>
               <div class="d-grid gap-2">
-                <button type="submit" name="update_admin" class="btn btn-primary btn-lg">
+                <button type="submit" name="update_admin" class="btn btn-gradient">
                   <i class="bx bx-save me-1"></i> Update Admin
                 </button>
-                <a href="admins.php" class="btn btn-outline-secondary">Cancel</a>
+                <a href="admins.php" class="btn btn-outline-primary">Cancel</a>
               </div>
             <?php else: ?>
-              <button type="submit" name="add_admin" class="btn btn-primary btn-lg w-100">
+              <button type="submit" name="add_admin" class="btn btn-gradient w-100">
                 <i class="bx bx-plus-circle me-1"></i> Add Admin
               </button>
             <?php endif; ?>
@@ -336,7 +372,6 @@ if (isset($_GET['edit'])) {
 
         <?php if (count($admins) > 0): ?>
           <?php
-            // Helpers for UI logic (no self-delete, keep at least one admin)
             $current_admin_id = (int)($_SESSION['admin_id'] ?? 0);
             $total_admins = count($admins);
           ?>
