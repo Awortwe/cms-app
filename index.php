@@ -64,6 +64,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
     }
   }
 }
+
+// ---- Retreat booking form handler ----
+$retreat_alert = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['retreat_submit'])) {
+  // Simple sanitization
+  $r_name     = trim($_POST['r_name'] ?? '');
+  $r_email    = trim($_POST['r_email'] ?? '');   // optional
+  $r_phone    = trim($_POST['r_phone'] ?? '');   // REQUIRED
+  $r_checkin  = trim($_POST['r_checkin'] ?? '');
+  $r_checkout = trim($_POST['r_checkout'] ?? '');
+  $r_guests   = intval($_POST['r_guests'] ?? 1);
+  $r_purpose  = trim($_POST['r_purpose'] ?? '');
+  $r_notes    = trim($_POST['r_notes'] ?? '');
+
+  // ✅ Require phone (not email)
+  if ($r_name === '' || $r_phone === '' || $r_checkin === '' || $r_checkout === '' || $r_purpose === '') {
+    $retreat_alert = ['type'=>'danger', 'text'=>'Please fill in all required fields (Name, Phone, Check-in, Check-out, Purpose).'];
+  } else {
+    try {
+      // Create table if it doesn't exist (email nullable, phone required)
+      $pdo->exec("
+        CREATE TABLE IF NOT EXISTS retreat_bookings (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(200) NOT NULL,
+          email VARCHAR(200) NULL,
+          phone VARCHAR(50) NOT NULL,
+          checkin DATE NOT NULL,
+          checkout DATE NOT NULL,
+          guests INT NOT NULL DEFAULT 1,
+          purpose VARCHAR(100) NOT NULL,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      ");
+
+      // If table already existed with NOT NULL email, make it nullable and phone required
+      // (safe to run; will error only if already correct — ignore errors silently)
+      try { $pdo->exec("ALTER TABLE retreat_bookings MODIFY email VARCHAR(200) NULL"); } catch (\Throwable $e) {}
+      try { $pdo->exec("ALTER TABLE retreat_bookings MODIFY phone VARCHAR(50) NOT NULL"); } catch (\Throwable $e) {}
+
+      $stmt = $pdo->prepare("
+        INSERT INTO retreat_bookings (name, email, phone, checkin, checkout, guests, purpose, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ");
+      $ok = $stmt->execute([
+        $r_name, ($r_email !== '' ? $r_email : null), $r_phone,
+        $r_checkin, $r_checkout, $r_guests, $r_purpose, $r_notes
+      ]);
+
+      if ($ok) {
+        $retreat_alert = ['type'=>'success', 'text'=>'Thank you! Your retreat booking request has been received. We will contact you to confirm availability.'];
+        $_POST = [];
+      } else {
+        $retreat_alert = ['type'=>'danger', 'text'=>'Sorry, something went wrong while submitting your booking request.'];
+      }
+    } catch (Exception $e) {
+      $retreat_alert = ['type'=>'danger', 'text'=>'Error: ' . $e->getMessage()];
+    }
+  }
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -544,6 +607,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       opacity: 1;
     }
 
+    /* Prevent any emoji or icon overlay on sermon videos or thumbnails */
+    .sermon-media-fixed::before,
+    .sermon-media-fixed::after,
+    .card.loading::before,
+    .card.loading::after,
+    video::before,
+    video::after,
+    img::before,
+    img::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    /* Optional: also ensure clean display */
+    .sermon-media-fixed {
+      position: relative;
+      overflow: hidden;
+    }
+
+
     /* ============ CONTACT FORM ============ */
     .contact-form {
       background: white;
@@ -632,6 +715,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       transform: translateY(-5px) scale(1.1);
       box-shadow: var(--shadow-large);
     }
+
+    .retreat-image-card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: var(--shadow-large);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .retreat-image-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 58%; /* responsive aspect ratio */
+      background: linear-gradient(135deg, #1A202C 0%, #2D3748 100%);
+    }
+
+    .retreat-image-wrap img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
 
     /* ============ FOOTER ============ */
     footer {
@@ -754,6 +862,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
           <li class="nav-item"><a class="nav-link" href="#sermons">Sermons</a></li>
           <li class="nav-item"><a class="nav-link" href="#posts">Posts</a></li>
           <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+          <li class="nav-item"><a class="nav-link" href="#retreat">Retreat</a></li>
            <!-- Add this admin icon link -->
           <li class="nav-item">
             <a class="nav-link admin-link px-2" href="admin/login.php" title="Admin" aria-label="Admin login">
@@ -1184,6 +1293,156 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact_submit'])) {
       </div>
     </div>
   </section>
+
+  <!-- RETREAT BOOKING SECTION -->
+<section id="retreat" class="py-5 section-muted">
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col-lg-8 mx-auto text-center" data-aos="fade-up">
+        <h2 class="section-title text-gradient">Retreat Center Booking</h2>
+        <p class="lead text-muted">Book our serene retreat center for personal renewal, group prayer, and ministry gatherings.</p>
+      </div>
+    </div>
+
+    <?php if (!empty($retreat_alert)): ?>
+      <div class="row mb-4" data-aos="fade-up">
+        <div class="col-lg-10 mx-auto">
+          <div class="alert alert-<?php echo $retreat_alert['type']==='success'?'success':'danger'; ?> alert-dismissible fade show glass" role="alert">
+            <i class="bx <?php echo $retreat_alert['type']==='success'?'bxs-check-circle':'bxs-error-circle'; ?> me-2"></i>
+            <?php echo htmlspecialchars($retreat_alert['text']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <div class="row align-items-stretch g-4">
+      <!-- Image / Info side -->
+      <div class="col-lg-6" data-aos="fade-right">
+        <div class="retreat-image-card h-100">
+          <div class="retreat-image-wrap">
+            <!-- Replace with your actual image path -->
+            <img src="./images/retreat-center.jpg" alt="Retreat Center" />
+          </div>
+          <div class="p-4">
+            <h5 class="mb-2">A Quiet Place to Pray & Reflect</h5>
+            <p class="text-secondary mb-3">
+              Our retreat center offers peaceful grounds, simple lodging, and spaces for prayer, study, and fellowship.
+            </p>
+            <ul class="list-unstyled small text-muted mb-0">
+              <li class="mb-2"><i class="bx bxs-check-circle text-success me-2"></i> Comfortable rooms & meeting hall</li>
+              <li class="mb-2"><i class="bx bxs-check-circle text-success me-2"></i> Chapel & outdoor prayer areas</li>
+              <li class="mb-2"><i class="bx bxs-check-circle text-success me-2"></i> Groups and individual retreats</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form side -->
+      <div class="col-lg-6" data-aos="fade-left">
+        <div class="contact-form h-100">
+          <form method="post" action="#retreat" novalidate>
+            <input type="hidden" name="retreat_submit" value="1">
+
+            <div class="row g-4">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bx bx-user me-2 text-primary"></i>Full Name <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" name="r_name" required
+                       value="<?php echo htmlspecialchars($_POST['r_name'] ?? ''); ?>"
+                       placeholder="Your full name">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bx bx-envelope me-2 text-primary"></i>Email
+                  <!-- no required mark -->
+                </label>
+                <input type="email" class="form-control" name="r_email"
+                      value="<?php echo htmlspecialchars($_POST['r_email'] ?? ''); ?>"
+                      placeholder="your@email.com">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="bx bx-phone me-2 text-primary"></i>Phone <span class="text-danger">*</span>
+                </label>
+                <input type="tel" class="form-control" name="r_phone" required
+                      value="<?php echo htmlspecialchars($_POST['r_phone'] ?? ''); ?>"
+                      placeholder="+233 XX XXX XXXX"
+                      pattern="^[0-9+\-\s()]{7,}$" title="Enter a valid phone number">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">
+                  <i class="bx bx-calendar me-2 text-primary"></i>Check-in <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" name="r_checkin" required
+                       value="<?php echo htmlspecialchars($_POST['r_checkin'] ?? ''); ?>">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">
+                  <i class="bx bx-calendar me-2 text-primary"></i>Check-out <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" name="r_checkout" required
+                       value="<?php echo htmlspecialchars($_POST['r_checkout'] ?? ''); ?>">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">
+                  <i class="bx bx-group me-2 text-primary"></i>Guests
+                </label>
+                <input type="number" class="form-control" name="r_guests" min="1" max="200"
+                       value="<?php echo htmlspecialchars($_POST['r_guests'] ?? '1'); ?>">
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label">
+                  <i class="bx bx-category me-2 text-primary"></i>Purpose <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" name="r_purpose" required>
+                  <option value="">Select purpose...</option>
+                  <?php
+                    $purposes = [
+                      'Personal retreat' => 'Personal Retreat',
+                      'Group retreat'    => 'Group / Ministry Retreat',
+                      'Leaders meeting'  => 'Leaders Meeting',
+                      'Prayer & fasting' => 'Prayer & Fasting',
+                      'Other'            => 'Other'
+                    ];
+                    $selp = $_POST['r_purpose'] ?? '';
+                    foreach ($purposes as $val => $label) {
+                      $selected = ($selp === $val) ? 'selected' : '';
+                      echo '<option value="'.htmlspecialchars($val).'" '.$selected.'>'.htmlspecialchars($label).'</option>';
+                    }
+                  ?>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">
+                  <i class="bx bx-message-detail me-2 text-primary"></i>Notes / Special Requests
+                </label>
+                <textarea class="form-control" rows="5" name="r_notes"
+                          placeholder="Any special needs, schedule, or details..."><?php echo htmlspecialchars($_POST['r_notes'] ?? ''); ?></textarea>
+              </div>
+
+              <div class="col-12 text-center">
+                <button type="submit" class="btn btn-gradient btn-lg px-5">
+                  <i class="bx bx-send me-2"></i>Request Booking
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 
   <!-- FOOTER -->
   <footer class="py-5">

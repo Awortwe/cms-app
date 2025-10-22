@@ -302,6 +302,7 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
         <li class="nav-item"><a class="nav-link" href="sermons.php"><i class="bx bxs-microphone"></i>Sermons</a></li>
         <li class="nav-item"><a class="nav-link" href="posts.php"><i class="bx bxs-news"></i>Posts</a></li>
         <li class="nav-item"><a class="nav-link" href="contact.php"><i class="bx bxs-contact"></i>Contact</a></li>
+         <li class="nav-item"><a class="nav-link" href="retreat_bookings.php"><i class="bx bxs-spa"></i>Retreat Bookings</a></li>
         <li class="nav-item"><a class="nav-link" href="admins.php"><i class="bx bxs-widget"></i>Admins</a></li>
       </ul>
     </nav>
@@ -454,7 +455,6 @@ $seriesMessages = monthlySeries($pdo, 'contact_messages', 'created_at');
               <a class="btn btn-gradient" href="events.php"><i class="bx bx-plus"></i> Add New Event</a>
               <a class="btn btn-gradient" href="sermons.php"><i class="bx bx-upload"></i> Upload Sermon</a>
               <a class="btn btn-gradient" href="posts.php"><i class="bx bx-edit"></i> Write Post</a>
-              <a class="btn btn-outline-primary" href="footer.php"><i class="bx bx-cog"></i> Settings</a>
             </div>
           </div>
         </div>

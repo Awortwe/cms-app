@@ -265,6 +265,7 @@ $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
         <li class="nav-item"><a class="nav-link" href="sermons.php"><i class="bx bxs-microphone"></i>Sermons</a></li>
         <li class="nav-item"><a class="nav-link active" href="posts.php"><i class="bx bxs-news"></i>Posts</a></li>
         <li class="nav-item"><a class="nav-link" href="contact.php"><i class="bx bxs-contact"></i>Contact</a></li>
+         <li class="nav-item"><a class="nav-link" href="retreat_bookings.php"><i class="bx bxs-spa"></i>Retreat Bookings</a></li>
         <li class="nav-item"><a class="nav-link" href="admins.php"><i class="bx bxs-widget"></i>Admins</a></li>
       </ul>
     </nav>
